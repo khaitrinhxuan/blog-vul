@@ -5,6 +5,8 @@ from blogapp.models.Tag import Tags
 from django.contrib.auth.models import User
 from ckeditor_uploader.fields import RichTextUploadingField
 from django.utils.safestring import mark_safe
+
+from blogapp.sanitize import safe_html
 from django.urls import reverse
 from django.conf import settings
 
@@ -26,7 +28,8 @@ class Post(models.Model):
         return f"{self.title}"
 
     def admin_content(self):
-        return mark_safe(self.content)
+        # Sanitised allow-list HTML; never mark raw stored content safe.
+        return safe_html(self.content)
 
     def get_url(self):
 

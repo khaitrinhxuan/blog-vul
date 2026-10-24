@@ -5,6 +5,8 @@ from ckeditor_uploader.fields import RichTextUploadingField
 from django.utils.safestring import mark_safe
 from django.conf import settings
 
+from blogapp.sanitize import safe_html
+
 
 class Comment(models.Model):
     post_id = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comment")
@@ -21,7 +23,8 @@ class Comment(models.Model):
         return self.content
 
     def admin_content(self):
-        return mark_safe(self.content)
+        # Sanitised allow-list HTML; never mark raw stored content safe.
+        return safe_html(self.content)
 
     @property
     def cmt_image(self):
