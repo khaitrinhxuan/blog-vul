@@ -1,10 +1,10 @@
 from django.views.generic import ListView
 from blogapp.models.Setting import Vul
 from django.shortcuts import render
-import json, jwt
+import jwt
+from decouple import config
 from django.template import engines
 from core.lib import jwt_vul
-from core.lib.jwt_vul.utils import base64url_decode
 
 
 class settingView(ListView):
@@ -28,23 +28,25 @@ class settingView(ListView):
         jwts = Vul.objects.filter(name="JWT").values()[0]["status"]
         if request.user.username:
             cookie_check = request.COOKIES["auth"]
-            if jwt_confusion and not jwts:
-                ext, fake = cookie_check.split(".", 1)
-                header = base64url_decode(bytes(str(ext), "utf-8"))
-                pubkey = json.loads(header.decode("utf-8"))
-                publickey = pubkey["publickey"]
-                cookie_decode = jwt_vul.decode(cookie_check, publickey)
+            try:
+                if jwt_confusion and not jwts:
+                    with open(config("PUBLICKEY"), "r") as keyfile:
+                        publickey = keyfile.read()
+                    cookie_decode = jwt.decode(cookie_check, publickey, algorithms=["RS256"])
 
-            elif jwts:
-                key = request.session["key"]
-                cookie_decode = jwt_vul.decode(cookie_check, key)
+                elif jwts:
+                    key = request.session["key"]
+                    cookie_decode = jwt_vul.decode(cookie_check, key)
 
-            else:
+                else:
 
-                key = request.session["key"]
-                cookie_decode = jwt.decode(cookie_check, key, algorithms="HS256")
+                    key = request.session["key"]
+                    cookie_decode = jwt.decode(cookie_check, key, algorithms=["HS256"])
 
-            if cookie_decode["admin"]:
+            except Exception:
+                cookie_decode = None
+
+            if cookie_decode and cookie_decode["admin"]:
 
                 for _vuls in self.nameVuls:
 
