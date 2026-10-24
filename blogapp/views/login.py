@@ -19,15 +19,10 @@ def create_cookie(user, request):
 
     if jwt_confusion and not jwts:
 
-        from core.lib import jwt_vul
-
         with open(config("PRIVATEKEY"), "r") as filekey:
             privatekey = filekey.read()
 
-        with open(config("PUBLICKEY"), "r") as pubkey:
-            embedded = pubkey.read()
-
-        return jwt_vul.encode(payload, privatekey, algorithm="RS256", headers={"publickey": embedded}).decode()
+        return jwt.encode(payload, privatekey, algorithm="RS256")
 
     elif jwts:
         from core.lib import jwt_vul
