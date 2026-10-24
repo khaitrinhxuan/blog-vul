@@ -2,6 +2,19 @@
 echo "start memcached"
 /etc/init.d/memcached restart 2>&1
 
+# The JWT signing keys are not committed. Generate them if this deployment has
+# none yet (idempotent; never overwrites existing keys).
+python script/generate_keys.py
+
+# Fail fast on tracked secret material (see tests/test_tracked_secrets.py).
+# Exit 1 = a violation, 2 = no git metadata in this image (CI enforces it there).
+python tests/test_tracked_secrets.py
+gate_status=$?
+if [ "$gate_status" -eq 1 ]; then
+    echo "ERROR: secret material is tracked in this repository. Refusing to start."
+    exit 1
+fi
+
  echo "Makemigrations"
 
  while ! python manage.py makemigrations 2>&1; do

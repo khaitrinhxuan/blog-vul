@@ -16,6 +16,17 @@ git clone https://github.com/pentestThucchienTeam/blog-vul.git
 
 ```
 
+## Step 1.5
+
+Configuration and keys are not committed. Create your local environment file and
+the JWT signing key pair:
+
+```
+cp .env.example .env
+# edit .env: set SECRET_KEY, POSTGRES_PASSWORD, DATABASE_PASSWORD
+python script/generate_keys.py
+```
+
 ## Step 2
 
 Running
