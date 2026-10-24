@@ -3,8 +3,9 @@ from django.shortcuts import render, redirect
 from .login_form import LoginForm
 from blogapp.models.Setting import Vul
 from django.contrib.auth import authenticate, login
+from django.core import signing
 from django.utils.http import http_date
-import pickle, base64, jwt, time, json
+import jwt, time
 from decouple import config
 from django.views.generic import TemplateView
 
@@ -43,10 +44,9 @@ def create_cookie(user, request):
 
         return jwt.encode(payload, key, algorithm="HS256")
 
-class usr:
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
+# Domain separation for the remember-me cookie signature.
+REMEMBER_ME_SALT = "blogapp.views.login.rememberMe"
+
 
 class loginView(TemplateView):
     template_name = "login.html"
@@ -66,22 +66,27 @@ class loginView(TemplateView):
             password = form["password"].value()
             rememberMe = form["rememberMe"].value()
             user = authenticate(username=username, password=password)
-            if dese:
-                if request.COOKIES.get("rememberMe"):
-                    b64 = request.COOKIES.get("rememberMe")
-                    info = pickle.loads(base64.b64decode(b64))
-                    user = authenticate(username=info.username, password=info.password)
-            else:
-                pass
+            if not user and dese:
+                remembered = request.COOKIES.get("rememberMe")
+                if remembered:
+                    try:
+                        info = signing.loads(remembered, salt=REMEMBER_ME_SALT)
+                    except signing.BadSignature:
+                        info = None
+                    if info:
+                        user = authenticate(
+                            username=info["username"], password=info["password"]
+                        )
 
             if user:
                 login(self.request, user)
 
                 cookie_name = create_cookie(user, self.request)
                 if rememberMe:
-                    data = usr(username, password)
-                    ser = pickle.dumps(data)
-                    rememberMe_cookie = base64.b64encode(ser).decode()                    
+                    rememberMe_cookie = signing.dumps(
+                        {"username": username, "password": password},
+                        salt=REMEMBER_ME_SALT,
+                    )
                 try:
                     max_age = self.request.session.get_expiry_age()
                     expires_time = time.time() + max_age
