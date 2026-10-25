@@ -1,0 +1,21 @@
+# Secret material must never be baked into an image layer (`dockerfile: COPY . .`).
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+blogapp/key/
+
+# Local state and tooling output
+.git
+.github
+db.sqlite3
+*.log
+example_data/
+media/
+staticfile/
+staticfiles/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
