@@ -27,3 +27,11 @@ staticfiles/*
 example_data/*
 .vscode/*
 
+
+# secrets & key material - never commit these (see .env.example)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+blogapp/key/
